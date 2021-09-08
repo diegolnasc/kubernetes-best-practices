@@ -49,7 +49,7 @@ RUN apt-get update && apt-get install -y  \
   git \
   gcc (Avoid running commands that need local caching on different layers)
 ... 
-(Sempre deixe os as instruções que mudam constante (código etc) por ultimo para aproveitar o cache)
+(Always leave the constantly changing instructions like code last to take advantage of the cache)
 
 FROM alpine:3.14 (Use multiple stages to simplify and reduce the image)
 WORKDIR /root/
