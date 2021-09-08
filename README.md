@@ -1,1 +1,248 @@
-# kubernetes-best-pratices
+# Kubernetes Best Pratices 101
+
+In most cases, you learn to use platforms to meet the current business need or on standalone projects. The silver lining is the encouragement of learning and at some point this becomes knowledge, however, hands-on work can lead to cuts in paths that later cause a series of problems in productive environments. Therefore, the purpose of this guide is to help with the learning curve, helping to prepare a more stable, reliable and functional environment.
+
+## Official Documentation
+
+* 📙 [Official Documentation](https://kubernetes.io/docs/home/)
+
+## Table of Contents
+
+- [Container](container/container.md)
+- [Cluster](#cluster)
+    + [Infrastructure](#infrastructure)
+    + [Namespace](#namespace)
+- [Basics](#basics)
+    + [Security](#security)
+    + [Labels](#labels)
+    + [Liveness](#liveness)
+    + [Readiness](#readiness)
+    + [Scalability](#scalability)
+    + [Resources](#resources)
+    + [Shutdown](#shutdown)
+- [Deployment and Review](#deployment-and-review)
+---
+---
+
+## Cluster
+---
+
+#### Infrastructure
+
+I don't intend to go into infrastructure best practices, but we can say that the standard 'paperwork', private VPC, multiple networks, firewall rules etc. also apply for a kubernetes cluster.
+The points that need to be highlighted are:
+
+- **Network**: Set aside a network for the cluster and make sure there is enough space for the pods and services. So find out how many pods per node you want to use and make calculations in cdir based on that. It's worth noting that each cloud provider can have its own variation and rules, so check the documentation.
+Practical example: The [GCP](https://cloud.google.com/kubernetes-engine/docs/how-to/flexible-pod-cidr#cidr_ranges_for_clusters) reserves double the IP for specific ranges based on the maximum pods per node, starting from 8 to 110. So, a direct translation is::
+    - Subnetwork range (cdir): Maximum number of nodes.
+    - Range for pods (cdir): Maximum number of pods based on the maximum number of pods per node. Example: A pod cdir range /19 supports 256 nodes in a configuration of 16 maximum pods per node. Consequently, a subnetwork range (item above) of at least /24 is required.
+    - Range for services (cdir): Maximum number of services based on maximum number of pods per node.
+
+- **Private**: Leave nodes and API restricted and/or inaccessible on the internet. So, use private clusters and, if your team is large enough, separate (project/account, private VPC...) them into different environments (development, production...).
+
+#### Namespace
+
+> Use namespace profusely!
+
+Simply put, the namespace is a way to organize objects, products and teams in Kubernetes. Namespaces provide granularity to separate teams and/or products, in large companies, it's quite common not to know all teams, as well as development models. Therefore, it's important to isolate and have the freedom to build a fast and secure development flow, respecting the limits. Of course, it's important to analyze each environment, in a small company, we don't need so much logical separation, because everyone knows each other and the cost has to make sense with the business.
+
+Here is an example of how to do it (if possible, set quota for each namespace):
+
+```
+kubectl create namespace my-first-namespace
+```
+
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: my-first-namespace
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 10Gi
+    limits.cpu: "20"
+    limits.memory: 20Gi
+```
+
+## Basics
+---
+#### Security
+
+Just as we want to separate teams and/or products into namespaces to "walk" freely, we also need to be responsible with security in the cluster. In other words, we don't want a security breach to happen that spreads all over the cluster, after all, behind the cluster we have baremetal susceptible to this. Apply all [security](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) fine tuning and, if possible, don't run container with root permission.
+
+#### Labels 
+
+Build a table with mandatory labels to be used on objects deployed in the cluster. Despite being something simple and trivial, having descriptive labels helps in the maintenance, visualization and understanding of the resource. Therefore, create a best practices table with the [recommended](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/) labels plus what your team understands is necessary.
+
+```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: mysql-abcxzy
+    app.kubernetes.io/version: "5.7.21"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: wordpress
+    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/created-by: controller-manager
+```
+
+#### Liveness 
+
+In any environment, it's necessary to develop the application thinking about how to check if the health is good. In Kuberentes, liveliness is responsible for this. The probes constantly check the application's health, in case of failure the container is restarted and, consequently, stops serving requests.
+For most cases, an HTTP endpoint */health* with a return of 200 OK is sufficient, however it is also possible to check by command or TCP.
+
+Here is an example of how to do it:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: liveness
+  name: liveness-example
+spec:
+  containers:
+  - name: liveness
+    image: gcr.io/google-samples/hello-app:1.0
+    ports:
+        - containerPort: 8080
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 3
+      periodSeconds: 2
+```
+> For more details, check the [probles](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes): [HTTP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request), [Command](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-command) or [TCP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-tcp-liveness-probe).
+
+#### Readiness 
+
+Like Liveness, the readiness probe is responsible for controlling whether the application is ready to receive requests. In short, when the return is positive, it means that all the processes necessary for the application to work have already been carried out and it is ready to receive a request.
+For most cases, an HTTP endpoint */ready* with a return of 200 OK is sufficient, however it is also possible to check by command or TCP.
+
+Here is an example of how to do it:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: readiness
+  name: readiness-example
+spec:
+  containers:
+  - name: readiness
+    image: gcr.io/google-samples/hello-app:1.0
+    ports:
+        - containerPort: 8080
+    livenessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 3
+      periodSeconds: 1
+```
+
+> For more details, check the [probles](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes): [HTTP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request), [Command](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-command) or [TCP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-tcp-liveness-probe).
+
+#### Scalability
+
+Choose the scalability model according to the application's characteristics. In kubernetes, it's very common to use a Horizontal Pod Autoscaler ([HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)) or Vertical Pod Autoscaler ([VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)).
+
+Here is an example of how to do it:
+```yaml
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+```
+
+#### Resources 
+
+Explicitly set resources on each Pod/Deployment, this makes kubernetes have great node and scale management. In practice, with well defined features, kubernetes will place applications on correct nodes, as well as control the scalability of node pools and applications, and prevent applications from being killed.
+
+Defining a resource for an application is not a very simple task, however, with time assertiveness starts to appear. A good way is to use some load testing application, such as [Locust](https://github.com/locustio/locust), and stress the application and see how resources are being used. At the same time, it is also useful to use a VPA in recommendation mode to compare the tips with their final value.
+
+One suggestion is to set the requested memory value equal to the limit, as for cpu, we can just set the requested value. This reason is simple, basically memory is a non-compressible resource!
+
+Here is an example of how to do it:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: hello-resource
+  name: hello-resource
+spec:
+  containers:
+  - name: hello-resource
+    image: gcr.io/google-samples/hello-app:1.0
+    ports:
+        - containerPort: 8080
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "64Mi"
+    livenessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 3
+      periodSeconds: 1
+```
+
+#### Shutdown
+
+The kubernetes termination cycle is as follows:
+
+1. Terminating: All flow is stopped and the pod state goes into terminating.
+2. PreStop Hook: A termination alert is sent by command or HTTP request to the container to initiate the termination process.
+3. SIGTERM Signal: A termination event is sent for the purpose of warning that the container will be terminated soon.
+4. GracePeriod: Kubernetes waits for the grace period defined.
+5. SIGKILL: Well, the timer has run out and the container will be removed.
+
+Based on the cycle above, we need to ensure that our application is prepared to go through with all events and finish in a good manner without compromising the user experience. Therefore, it's very important to use the preStopp hook, sigterm and grace period so that we don't process any more requests and finish the ones that are in progress.
+
+Here is an example of how to configure:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lifecycle-terminating
+spec:
+  containers:
+  - name: lifecycle-terminating
+    image: random-image
+    terminationGracePeriodSeconds: 60
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
+```
+## Deployment and Review
+
+---
+
+Develop a strong CI/CD to ensure all mandatory steps are followed, as well as smooth the deployment flow for all teams. In a way, we can put as mandatory features:
+
+- Only use images from trusted repositories.
+- Use the commit as a tag for the image.
+- Use the - -*record* flag to track the version history of deployments and facilitate rollback.
+- Make sure all the best practices mentioned here are being followed and disseminated among the teams.
