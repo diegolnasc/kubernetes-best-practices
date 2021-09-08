@@ -2,9 +2,12 @@
 
 In most cases, you learn to use platforms to meet the current business need or on standalone projects. The silver lining is the encouragement of learning and at some point this becomes knowledge, however, hands-on work can lead to cuts in paths that later cause a series of problems in productive environments. Therefore, the purpose of this guide is to help with the learning curve, helping to prepare a more stable, reliable and functional environment.
 
-## Official Documentation
+## Documentation
 
 * 📙 [Official Documentation](https://kubernetes.io/docs/home/)
+* 📙 [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine/docs/how-to)
+* 📙 [Amazon Elastic Kubernetes Service (EKS)](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html)
+* 📙 [Azure Kubernetes Service (AKS)](https://docs.microsoft.com/en-us/azure/aks/)
 
 ## Table of Contents
 
