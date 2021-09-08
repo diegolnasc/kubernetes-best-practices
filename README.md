@@ -118,16 +118,16 @@ metadata:
   name: liveness-example
 spec:
   containers:
-    - name: liveness
-      image: gcr.io/google-samples/hello-app:1.0
-      ports:
+  - name: liveness
+    image: gcr.io/google-samples/hello-app:1.0
+    ports:
         - containerPort: 8080
-      livenessProbe:
-        httpGet:
-          path: /health
-          port: 8080
-        initialDelaySeconds: 3
-        periodSeconds: 2
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 3
+      periodSeconds: 2
 ```
 > For more details, check the [probles](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes): [HTTP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request), [Command](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-command) or [TCP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-tcp-liveness-probe).
 
@@ -146,16 +146,16 @@ metadata:
   name: readiness-example
 spec:
   containers:
-    - name: readiness
-      image: gcr.io/google-samples/hello-app:1.0
-      ports:
+  - name: readiness
+    image: gcr.io/google-samples/hello-app:1.0
+    ports:
         - containerPort: 8080
-      livenessProbe:
-        httpGet:
-          path: /ready
-          port: 8080
-        initialDelaySeconds: 3
-        periodSeconds: 1
+    livenessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 3
+      periodSeconds: 1
 ```
 
 > For more details, check the [probles](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes): [HTTP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request), [Command](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-command) or [TCP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-tcp-liveness-probe).
@@ -178,12 +178,12 @@ spec:
   minReplicas: 1
   maxReplicas: 5
   metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
 ```
 
 #### Resources
@@ -204,22 +204,22 @@ metadata:
   name: hello-resource
 spec:
   containers:
-    - name: hello-resource
-      image: gcr.io/google-samples/hello-app:1.0
-      ports:
+  - name: hello-resource
+    image: gcr.io/google-samples/hello-app:1.0
+    ports:
         - containerPort: 8080
-      resources:
-        requests:
-          memory: "64Mi"
-          cpu: "250m"
-        limits:
-          memory: "64Mi"
-      livenessProbe:
-        httpGet:
-          path: /ready
-          port: 8080
-        initialDelaySeconds: 3
-        periodSeconds: 1
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "64Mi"
+    livenessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 3
+      periodSeconds: 1
 ```
 
 #### Shutdown
@@ -242,13 +242,13 @@ metadata:
   name: lifecycle-terminating
 spec:
   containers:
-    - name: lifecycle-terminating
-      image: random-image
-      terminationGracePeriodSeconds: 60
-      lifecycle:
-        preStop:
-          exec:
-            command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
+  - name: lifecycle-terminating
+    image: random-image
+    terminationGracePeriodSeconds: 60
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
 ```
 ## Deployment and Review
 
