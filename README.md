@@ -1,4 +1,4 @@
-# Kubernetes Best Pratices 101
+# Kubernetes Best Practices 101
 
 In most cases, you learn to use platforms to meet the current business need or on standalone projects. The silver lining is the encouragement of learning and at some point this becomes knowledge, however, hands-on work can lead to cuts in paths that later cause a series of problems in productive environments. Therefore, the purpose of this guide is to help with the learning curve, helping to prepare a more stable, reliable and functional environment.
 
