@@ -10,16 +10,17 @@ In most cases, you learn to use platforms to meet the current business need or o
 
 - [Container](container/container.md)
 - [Cluster](#cluster)
-    + [Infrastructure](#infrastructure)
-    + [Namespace](#namespace)
+  + [Infrastructure](#infrastructure)
+  + [Cost Optimization](#cost-optimization)
+  + [Namespace](#namespace)
 - [Basics](#basics)
-    + [Security](#security)
-    + [Labels](#labels)
-    + [Liveness](#liveness)
-    + [Readiness](#readiness)
-    + [Scalability](#scalability)
-    + [Resources](#resources)
-    + [Shutdown](#shutdown)
+  + [Security](#security)
+  + [Labels](#labels)
+  + [Liveness](#liveness)
+  + [Readiness](#readiness)
+  + [Scalability](#scalability)
+  + [Resources](#resources)
+  + [Shutdown](#shutdown)
 - [Deployment and Review](#deployment-and-review)
 ---
 ---
@@ -33,12 +34,25 @@ I don't intend to go into infrastructure best practices, but we can say that the
 The points that need to be highlighted are:
 
 - **Network**: Set aside a network for the cluster and make sure there is enough space for the pods and services. So find out how many pods per node you want to use and make calculations in cdir based on that. It's worth noting that each cloud provider can have its own variation and rules, so check the documentation.
-Practical example: The [GCP](https://cloud.google.com/kubernetes-engine/docs/how-to/flexible-pod-cidr#cidr_ranges_for_clusters) reserves double the IP for specific ranges based on the maximum pods per node, starting from 8 to 110. So, a direct translation is::
-    - Subnetwork range (cdir): Maximum number of nodes.
-    - Range for pods (cdir): Maximum number of pods based on the maximum number of pods per node. Example: A pod cdir range /19 supports 256 nodes in a configuration of 16 maximum pods per node. Consequently, a subnetwork range (item above) of at least /24 is required.
-    - Range for services (cdir): Maximum number of services based on maximum number of pods per node.
+  Practical example: The [GCP](https://cloud.google.com/kubernetes-engine/docs/how-to/flexible-pod-cidr#cidr_ranges_for_clusters) reserves double the IP for specific ranges based on the maximum pods per node, starting from 8 to 110. So, a direct translation is::
+  - Subnetwork range (cdir): Maximum number of nodes.
+  - Range for pods (cdir): Maximum number of pods based on the maximum number of pods per node. Example: A pod cdir range /19 supports 256 nodes in a configuration of 16 maximum pods per node. Consequently, a subnetwork range (item above) of at least /24 is required.
+  - Range for services (cdir): Maximum number of services based on maximum number of pods per node.
 
 - **Private**: Leave nodes and API restricted and/or inaccessible on the internet. So, use private clusters and, if your team is large enough, separate (project/account, private VPC...) them into different environments (development, production...).
+- **Infrastructure as Code**: Keep all infrastructure versioned and well-documented with tools like [Terraform](https://www.terraform.io/), [CloudFormation](https://aws.amazon.com/cloudformation/?nc1=h_ls) or [Ansible](https://www.ansible.com/). For deployment management, I particularly think applications deserve a proper CD tool.
+
+#### Cost Optimization
+
+- **Cloud**:
+  + Pay attention to the committed use discounts plans.
+  + Choose the right type of machine, it's quite common to have discounts for specific types. For instance, GCP E2 types offer you 31% savings compared to the default N1.
+  + Some processes (like batch/job) don't need to be close to the user, so use the region with the most interesting cost. Of course, be wary of transfers between regions and the entire lifecycle of your processes.
+  + For each application deployed, we need 10 more to monitor it. Jokes aside, be aware of the cost of monitoring.
+- **Node-pools**:
+  + If you have a robust environment, create specific node-pools according to the characteristics of the applications. A good example is having node-pools high memory, high cpu, and so on. The main purpose is to direct the applications to the correct nodes and use as much resource as possible, as we don't want to have too much resource idle.
+  + Some applications are not as sensitive or don't need to be 24/7 online. If possible, create spot/preemptible node pools and only pay for a small chunk of the instance. It's important to note that there are lots of cool projects ([estafette](https://github.com/estafette/estafette-gke-preemptible-killer)) to play, it's worth taking a look.
+  + Enable auto-scaling to reduce cost at times with fewer users.
 
 #### Namespace
 
@@ -71,7 +85,7 @@ spec:
 
 Just as we want to separate teams and/or products into namespaces to "walk" freely, we also need to be responsible with security in the cluster. In other words, we don't want a security breach to happen that spreads all over the cluster, after all, behind the cluster we have baremetal susceptible to this. Apply all [security](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) fine tuning and, if possible, don't run container with root permission.
 
-#### Labels 
+#### Labels
 
 Build a table with mandatory labels to be used on objects deployed in the cluster. Despite being something simple and trivial, having descriptive labels helps in the maintenance, visualization and understanding of the resource. Therefore, create a best practices table with the [recommended](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/) labels plus what your team understands is necessary.
 
@@ -89,7 +103,7 @@ metadata:
     app.kubernetes.io/created-by: controller-manager
 ```
 
-#### Liveness 
+#### Liveness
 
 In any environment, it's necessary to develop the application thinking about how to check if the health is good. In Kuberentes, liveliness is responsible for this. The probes constantly check the application's health, in case of failure the container is restarted and, consequently, stops serving requests.
 For most cases, an HTTP endpoint */health* with a return of 200 OK is sufficient, however it is also possible to check by command or TCP.
@@ -104,20 +118,20 @@ metadata:
   name: liveness-example
 spec:
   containers:
-  - name: liveness
-    image: gcr.io/google-samples/hello-app:1.0
-    ports:
+    - name: liveness
+      image: gcr.io/google-samples/hello-app:1.0
+      ports:
         - containerPort: 8080
-    livenessProbe:
-      httpGet:
-        path: /health
-        port: 8080
-      initialDelaySeconds: 3
-      periodSeconds: 2
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        initialDelaySeconds: 3
+        periodSeconds: 2
 ```
 > For more details, check the [probles](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes): [HTTP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request), [Command](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-command) or [TCP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-tcp-liveness-probe).
 
-#### Readiness 
+#### Readiness
 
 Like Liveness, the readiness probe is responsible for controlling whether the application is ready to receive requests. In short, when the return is positive, it means that all the processes necessary for the application to work have already been carried out and it is ready to receive a request.
 For most cases, an HTTP endpoint */ready* with a return of 200 OK is sufficient, however it is also possible to check by command or TCP.
@@ -132,16 +146,16 @@ metadata:
   name: readiness-example
 spec:
   containers:
-  - name: readiness
-    image: gcr.io/google-samples/hello-app:1.0
-    ports:
+    - name: readiness
+      image: gcr.io/google-samples/hello-app:1.0
+      ports:
         - containerPort: 8080
-    livenessProbe:
-      httpGet:
-        path: /ready
-        port: 8080
-      initialDelaySeconds: 3
-      periodSeconds: 1
+      livenessProbe:
+        httpGet:
+          path: /ready
+          port: 8080
+        initialDelaySeconds: 3
+        periodSeconds: 1
 ```
 
 > For more details, check the [probles](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes): [HTTP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request), [Command](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-command) or [TCP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-tcp-liveness-probe).
@@ -164,15 +178,15 @@ spec:
   minReplicas: 1
   maxReplicas: 5
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 50
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
 ```
 
-#### Resources 
+#### Resources
 
 Explicitly set resources on each Pod/Deployment, this makes kubernetes have great node and scale management. In practice, with well defined features, kubernetes will place applications on correct nodes, as well as control the scalability of node pools and applications, and prevent applications from being killed.
 
@@ -190,22 +204,22 @@ metadata:
   name: hello-resource
 spec:
   containers:
-  - name: hello-resource
-    image: gcr.io/google-samples/hello-app:1.0
-    ports:
+    - name: hello-resource
+      image: gcr.io/google-samples/hello-app:1.0
+      ports:
         - containerPort: 8080
-    resources:
-      requests:
-        memory: "64Mi"
-        cpu: "250m"
-      limits:
-        memory: "64Mi"
-    livenessProbe:
-      httpGet:
-        path: /ready
-        port: 8080
-      initialDelaySeconds: 3
-      periodSeconds: 1
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "250m"
+        limits:
+          memory: "64Mi"
+      livenessProbe:
+        httpGet:
+          path: /ready
+          port: 8080
+        initialDelaySeconds: 3
+        periodSeconds: 1
 ```
 
 #### Shutdown
@@ -228,13 +242,13 @@ metadata:
   name: lifecycle-terminating
 spec:
   containers:
-  - name: lifecycle-terminating
-    image: random-image
-    terminationGracePeriodSeconds: 60
-    lifecycle:
-      preStop:
-        exec:
-          command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
+    - name: lifecycle-terminating
+      image: random-image
+      terminationGracePeriodSeconds: 60
+      lifecycle:
+        preStop:
+          exec:
+            command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
 ```
 ## Deployment and Review
 
