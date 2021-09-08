@@ -7,7 +7,7 @@ with the learning curve, helping to prepare a more stable, reliable and function
 
 ## Documentation
 
-* 📙 [Official Documentation](https://kubernetes.io/docs/home/)
+* 📙 [Kubernetes Official Documentation](https://kubernetes.io/docs/home/)
 * 📙 [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine/docs/how-to)
 * 📙 [Amazon Elastic Kubernetes Service (EKS)](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html)
 * 📙 [Azure Kubernetes Service (AKS)](https://docs.microsoft.com/en-us/azure/aks/)
