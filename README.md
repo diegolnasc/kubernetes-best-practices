@@ -301,9 +301,9 @@ spec:
 
 #### Deployment
 
-Regarding ReplicaSet deployment strategies, we have:
+Regarding ReplicaSet deployment strategies, there are:
 
-- **RollingUpdate**: Starts new replicas before deleting old ones.
+- **RollingUpdate**: Starts new container's before deleting old ones.
 	+ Pro: No Downtime.
 	+ Cons: Deployment can be time-consuming and there is no traffic control between versions.
 - **Recreate**: Remove all old containers and start new versions simultaneously.
@@ -316,7 +316,7 @@ Specifically about the means of deployments, we can highlight:
 
 **Blue-Green**:
 
-A blue/green deployment duplicates the environment with two parallel versions, meaning we will have two versions available. It's a great way to reduce service downtime and ensure all traffic is transferred immediately.
+A blue/green deployment duplicates the environment with two parallel versions, in other words, two versions will be available. It's a great way to reduce service downtime and ensure all traffic is transferred immediately.
 
 To take advantage of this strategy, you need to use extensions (**recommended**) such as service mesh or knative. However, for small environments, we can also do this manually as this reduces the complexity and again the cost has to make good business sense. The image below shows a way to do this manually, once the versions are online, we just need to switch traffic to the new version (green) with a load balancer/ingress.
 
@@ -324,7 +324,7 @@ To take advantage of this strategy, you need to use extensions (**recommended**)
 
 **Canary**:
 
-Canary deployment is a relevant way to test new versions without driving all the traffic right away. The idea is to separate a small part of users for the new version and gradually increase it until the entire flow is validated or discarded.
+Canary deployment is a relevant way to test new versions without driving all the traffic right away. The idea is to separate a small part of customers for the new version and gradually increase it until the entire flow is validated or discarded.
 
 As well as blue-green, it is also **highly recommended** to use other solutions such as [HaProxy](http://www.haproxy.org/), [Ngnix](https://www.nginx.com/), [Spinnaker](https://spinnaker.io/). However, we can also do this something manually as follows:
 
