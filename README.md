@@ -324,10 +324,9 @@ To take advantage of this strategy, you need to use extensions (recommended)  su
 
 **Canary**:
 
-A canary deployment é uma maneira relevante de testar novas versões da aplicação sem direcionar todo o trafico imediatamente. A ideia é separar uma parte pequena dos usuários para a versão nova e ir aumentando aos poucos até que todo o fluxo seja validado ou descartado.
+Canary deployment is a relevant way to test new versions without driving all the traffic right away. The idea is to separate a small part of users for the new version and gradually increase it until the entire flow is validated or discarded.
 
-
-Assim como o blue-green, também é autamente recomendado o uso de outras soluções como [HaProxy](http://www.haproxy.org/), [Ngnix](https://www.nginx.com/), [Spinnaker](https://spinnaker.io/). Contudo, também podemos fazer isso manualmente da seguinte forma:
+As well as blue-green, it is also **highly recommended** to use other solutions such as [HaProxy](http://www.haproxy.org/), [Ngnix](https://www.nginx.com/), [Spinnaker](https://spinnaker.io/). However, we can also do this manually as follows:
 
 ```yaml
 kind: Service
