@@ -312,13 +312,13 @@ Regarding ReplicaSet deployment strategies, we have:
 
 ![deployment-strategy](images/deployment-strategy.png)
 
-Specifically about the means of implementation, we can highlight:
+Specifically about the means of deployments, we can highlight:
 
 **Blue-Green**:
 
-A blue/green deployment duplicates the environment with two parallel versions, meaning we will have a *1.0* and *2.0* version of the applications. It's a great way to reduce service downtime and ensure all traffic is transferred immediately.
+A blue/green deployment duplicates the environment with two parallel versions, meaning we will have two versions available. It's a great way to reduce service downtime and ensure all traffic is transferred immediately.
 
-To take advantage of this strategy, you need to use extensions (recommended)  such as service mesh or knative. However, for small environments, we can also do this manually as this reduces the complexity and again the cost has to make good business sense. The image below shows a way to do this manually, once the versions are online, we just need to switch traffic to the new version(green) with a load balancer/ingress.
+To take advantage of this strategy, you need to use extensions (**recommended**) such as service mesh or knative. However, for small environments, we can also do this manually as this reduces the complexity and again the cost has to make good business sense. The image below shows a way to do this manually, once the versions are online, we just need to switch traffic to the new version (green) with a load balancer/ingress.
 
 ![deployment-blue-green-strategy](images/blue-green-deploy.png)
 
@@ -326,7 +326,7 @@ To take advantage of this strategy, you need to use extensions (recommended)  su
 
 Canary deployment is a relevant way to test new versions without driving all the traffic right away. The idea is to separate a small part of users for the new version and gradually increase it until the entire flow is validated or discarded.
 
-As well as blue-green, it is also **highly recommended** to use other solutions such as [HaProxy](http://www.haproxy.org/), [Ngnix](https://www.nginx.com/), [Spinnaker](https://spinnaker.io/). However, we can also do this manually as follows:
+As well as blue-green, it is also **highly recommended** to use other solutions such as [HaProxy](http://www.haproxy.org/), [Ngnix](https://www.nginx.com/), [Spinnaker](https://spinnaker.io/). However, we can also do this something manually as follows:
 
 ```yaml
 kind: Service
