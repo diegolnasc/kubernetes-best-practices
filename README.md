@@ -20,13 +20,14 @@ with the learning curve, helping to prepare a more stable, reliable and function
 	+ [Cost Optimization](#cost-optimization)
 	+ [Namespace](#namespace)
 - [Basics](#basics)
-	+ [Security](#security)
-	+ [Labels](#labels)
-	+ [Liveness](#liveness)
-	+ [Readiness](#readiness)
-	+ [Scalability](#scalability)
-	+ [Resources](#resources)
-	+ [Shutdown](#shutdown)
+    + [Security](#security)
+    + [Labels](#labels)
+    + [Liveness](#liveness)
+    + [Readiness](#readiness)
+    + [Resources](#resources)
+    + [Scalability](#scalability)
+    + [Deployment](#deployment)
+    + [Shutdown](#shutdown)
 - [Deployment and Review](#deployment-and-review)
 
 ---
@@ -206,53 +207,6 @@ spec:
 
 > For more details, check the [probles](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes): [HTTP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request), [Command](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-command) or [TCP](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-tcp-liveness-probe).
 
-#### Scalability
-
-Choose the scalability model according to the application's characteristics. In kubernetes, it's very common to use a
-Horizontal Pod Autoscaler ([HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)) or
-Vertical Pod Autoscaler ([VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)).
-
-For most cases, HPA is used with the trigger based on CPU usage. In this case, a good practice to define the target is:
-
-```math
-(CPU-HB - safety)/(CPU-HB + growth)
-```
-
-Where:
-
-- **CPU-HB**: CPU high-bound is the usage limit on the pod. In most cases, the limit is 100%, but for node-pools that have a considerable percentage of idle resource, we can increase the limit.
-- **safety**: We don't want the resource to reach its limit, so we set a safety threshold.
-- **growth**: Percentage of traffic growth that we expect in a few minutes.
-
-A practical example is an application where we set the limit at 100% usage for cpu, a safety threshold of 15% with an expected traffic growth of 45% in 5 minutes:
-
-```math
-(1 - 0.15)/(1 + 0.45) = 0.58
-```
-
-Here is an example of how to do it:
-
-```yaml
-apiVersion: autoscaling/v2beta2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: my-app
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: my-app
-  minReplicas: 1
-  maxReplicas: 5
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 58
-```
-
 #### Resources
 
 Explicitly set resources on each Pod/Deployment, this makes kubernetes have great node and scale management. In
@@ -295,6 +249,151 @@ spec:
         initialDelaySeconds: 3
         periodSeconds: 1
 ```
+
+#### Scalability
+
+Choose the scalability model according to the application's characteristics. In kubernetes, it's very common to use a
+Horizontal Pod Autoscaler ([HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)) or
+Vertical Pod Autoscaler ([VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)).
+
+For most cases, HPA is used with the trigger based on CPU usage. In this case, a good practice to define the target is:
+
+```math
+(CPU-HB - safety)/(CPU-HB + growth)
+```
+
+Where:
+
+- **CPU-HB**: CPU high-bound is the usage limit on the pod. In most cases, the limit is 100%, but for node-pools that
+  have a considerable percentage of idle resource, we can increase the limit.
+- **safety**: We don't want the resource to reach its limit, so we set a safety threshold.
+- **growth**: Percentage of traffic growth that we expect in a few minutes.
+
+A practical example is an application where we set the limit at 100% usage for cpu, a safety threshold of 15% with an
+expected traffic growth of 45% in 5 minutes:
+
+```math
+(1 - 0.15)/(1 + 0.45) = 0.58
+```
+
+Here is an example of how to do it:
+
+```yaml
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 58
+```
+
+#### Deployment
+
+Regarding ReplicaSet deployment strategies, there are:
+
+- **RollingUpdate**: Starts new container's before deleting old ones.
+	+ Pro: No Downtime.
+	+ Cons: Deployment can be time-consuming and there is no traffic control between versions.
+- **Recreate**: Remove all old containers and start new versions simultaneously.
+    + Pro: Remove previous ~~problematic~~ versions quickly.
+    + Cons: Downtime may be relevant depending on the cold start of applications.
+
+![deployment-strategy](images/deployment-strategy.png)
+
+Specifically about the means of deployments, we can highlight:
+
+**Blue-Green**:
+
+A blue/green deployment duplicates the environment with two parallel versions, in other words, two versions will be available. It's a great way to reduce service downtime and ensure all traffic is transferred immediately.
+
+To take advantage of this strategy, you need to use extensions (**recommended**) such as service mesh or knative. However, for small environments, we can also do this manually as this reduces the complexity and again the cost has to make good business sense. The image below shows a way to do this manually, once the versions are online, we just need to switch traffic to the new version (green) with a load balancer/ingress.
+
+![deployment-blue-green-strategy](images/blue-green-deploy.png)
+
+**Canary**:
+
+Canary deployment is a relevant way to test new versions without driving all the traffic right away. The idea is to separate a small part of customers for the new version and gradually increase it until the entire flow is validated or discarded.
+
+As well as blue-green, it is also **highly recommended** to use other solutions such as [HaProxy](http://www.haproxy.org/), [Ngnix](https://www.nginx.com/), [Spinnaker](https://spinnaker.io/). However, we can also do this something manually as follows:
+
+```yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: my-app
+spec:
+  sessionAffinity: ClientIP # It's important to secure the customer's session.
+  selector:
+    app: my-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: NodePort
+```
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 9
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: 1.0
+    spec:
+      containers:
+        - name: my-app
+          image: gcr.io/google-samples/hello-app:1.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: my-app
+      version: 2.0
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: gcr.io/google-samples/hello-app:2.0
+```
+
+In this example, we have a service that exposes two deployment versions (1.0 and 2.0), where the first has 9 instances and the second only 1, so it's expected that a large part of the traffic will be directed to the first version. Anyway, it's important to highlight that in order to guarantee the % of traffic, as well as the automated and smarter implementation, it's necessary to use other solutions like the ones mentioned above. Therefore, the example here is just a solution for specific cases that should not be taken as something definitive and ideal.
 
 #### Shutdown
 
