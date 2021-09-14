@@ -1,11 +1,11 @@
 # Container
 
 - [Container](#container)
-	+ [Stateless](#stateless)
-	+ [Image](#image)
-		* [Image pull policy](#image-pull-policy)
-		* [Cache](#cache)
-		* [Tag](#tag)
+  - [Stateless](#stateless)
+  - [Image](#image)
+      - [Image pull policy](#image-pull-policy)
+      - [Cache](#cache)
+      - [Tag](#tag)
 
 ## Stateless
 
