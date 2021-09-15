@@ -165,7 +165,7 @@ spec:
       image: gcr.io/google-samples/hello-app:1.0
       ports:
         - containerPort: 8080
-      readinessProbe:
+      livenessProbe:
         httpGet:
           path: /health
           port: 8080
@@ -197,7 +197,7 @@ spec:
       image: gcr.io/google-samples/hello-app:1.0
       ports:
         - containerPort: 8080
-      livenessProbe:
+      readinessProbe:
         httpGet:
           path: /ready
           port: 8080
