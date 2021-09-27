@@ -42,16 +42,16 @@ I don't intend to go into infrastructure best practices, but we can say that the
 multiple networks, firewall rules etc. also apply for a kubernetes cluster. The points that need to be highlighted are:
 
 - **Network**: Set aside a network for the cluster and make sure there is enough space for the pods and services. So
-  find out how many pods per node you want to use and make calculations in cdir based on that. It's worth noting that
+  find out how many pods per node you want to use and make calculations in CIDR based on that. It's worth noting that
   each cloud provider can have its own variation and rules, so check the documentation. Practical example:
   The [GCP](https://cloud.google.com/kubernetes-engine/docs/how-to/flexible-pod-cidr#cidr_ranges_for_clusters) reserves
   double the IP for specific ranges based on the maximum pods per node, starting from 8 to 110. So, a direct translation
   is::
-	- Subnetwork range (cdir): Maximum number of nodes.
-	- Range for pods (cdir): Maximum number of pods based on the maximum number of pods per node. Example: A pod cdir
+	- Subnetwork range (CIDR): Maximum number of nodes.
+	- Range for pods (CIDR): Maximum number of pods based on the maximum number of pods per node. Example: A pod CIDR
 	  range /19 supports 256 nodes in a configuration of 16 maximum pods per node. Consequently, a subnetwork range (
 	  item above) of at least /24 is required.
-	- Range for services (cdir): Maximum number of services based on maximum number of pods per node.
+	- Range for services (CIDR): Maximum number of services based on maximum number of pods per node.
 
 - **Private**: Leave nodes and API restricted and/or inaccessible on the internet. So, use private clusters and, if your
   team is large enough, separate (project/account, private VPC...) them into different environments (development,
