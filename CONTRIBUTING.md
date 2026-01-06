@@ -3,19 +3,19 @@
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
 - Reporting a bug
-- Discussing the current state of the the guide
+- Discussing the current state of the guide
 - Proposing new features
 - Submitting a fix or a new feature/term
 - Becoming a maintainer
 
-## We Develop and growth with Github
+## We Develop and Grow with Github
 We use github to host code, to track issues and feature requests, as well as accept pull requests.
 
 ## We use [Github Flow](https://guides.github.com/introduction/flow/index.html), So all code changes happen through Pull Requests
 Pull requests are the best way to propose changes to the codebase (we use [Github Flow](https://guides.github.com/introduction/flow/index.html)). We actively welcome your pull requests:
 
 1. Fork the repo and create your branch from `main`.
-2. Prefer write the commits using [Convetional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+2. Prefer to write the commits using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 3. If you've added a doc or example, make it understandable and clear.
 4. Make sure your code lints.
 5. Issue that pull request!
@@ -43,7 +43,7 @@ People *love* thorough bug reports. I'm not even kidding.
 
 ## Use a consistent coding style
 
-Choose the standart coding style based on the language, framework or file, that you will submit
+Choose the standard coding style based on the language, framework or file that you will submit
 
 
 ## References
